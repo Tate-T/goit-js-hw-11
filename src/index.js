@@ -1,12 +1,21 @@
-import refs from './js/refs';
+import axios from "axios";
+import Notiflix from 'notiflix';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 
+const refs = {
+    form: document.querySelector('.search-form'),
+    formBtn: document.querySelector('.js-form-btn'),
+    list: document.querySelector('.gallery'),
+    loadMoreBtn: document.querySelector('.load-more'),
+    goTopBtn: document.querySelector('.back_to_top')
+}
+
 refs.form.addEventListener('submit', onFormSubmit);
-refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 refs.list.addEventListener('click', onPictureClick);
-window.addEventListener('scroll', trackScroll);
+refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 refs.goTopBtn.addEventListener('click', backToTop);
+window.addEventListener('scroll', trackScroll);
 
 let page = 1;
 
@@ -24,11 +33,11 @@ function onFormSubmit(e) {
         q: value,
         orientation: 'horizontal',
         safesearch: true,
-        // page: 1,
+        page: 1,
         per_page: 40,
     });
 
-    fetch(`${BASE_URL}?${queryParam}&page=${page}`)
+    fetch(`${BASE_URL}?${queryParam}&page=${page}&per_page=40`)
         .then(res => res.json())
         .then(data => {
             renderCard(data);
@@ -36,36 +45,32 @@ function onFormSubmit(e) {
         });
 
     function renderCard({ hits }) {
-        refs.list.innerHTML = cardMarkup(hits);
+        refs.list.innerHTML = cardMarkup(hits).join('');
     }
 }
 
 function cardMarkup(hits) {
-    hits.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
-        `<li class="item">
+    return hits.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) =>
+        `<div class="item">
 <div class="photo-card">
   <img src="${webformatURL}" data-large-img=${largeImageURL} alt="${tags}" class="card-img"/>
 
   <div class="stats js-starts">
-    <p class="stats-item">
-      <i class="material-icons">thumb_up</i>
-      ${likes}
+    <p class="info-item">
+      <b>Likes:</b>${likes}
     </p>
-    <p class="stats-item">
-      <i class="material-icons">visibility</i>
-      ${views}
+    <p class="info-item">
+      <b>Views:</b>${views}
     </p>
-    <p class="stats-item">
-      <i class="material-icons">comment</i>
-      ${comments}
+    <p class="info-item">
+      <b>Comments:</b>${comments}
     </p>
-    <p class="stats-item">
-      <i class="material-icons">cloud_download</i>
-      ${downloads}
+    <p class="info-item">
+      <b>Downloads:</b>${downloads}
     </p>
   </div>
 </div>
-</li>`).join('');
+</div>`)
 }
 
 function incrementPage() {
@@ -88,6 +93,11 @@ function onLoadMoreBtnClick() {
     fetch(`${BASE_URL}?${queryParam}&page=${page}`)
         .then(res => res.json())
         .then(data => {
+            if (parsedData.totalHits > 40) {
+                Notiflix.Notify.info(
+                    "We're sorry, but you've reached the end of search results."
+                );
+            };
             renderCard(data);
             refs.loadMoreBtn.classList.remove('is-hidden');
             handleButtonClick();
@@ -112,7 +122,7 @@ function onPictureClick(e) {
         return;
     }
 
-    const instance = simplelightbox.create(`
+    const instance = SimpleLightbox.create(`
     <img src="${e.target.dataset.largeImg}" width="800" height="600">
   `);
     instance.show();
