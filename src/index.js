@@ -93,11 +93,6 @@ function onLoadMoreBtnClick() {
     fetch(`${BASE_URL}?${queryParam}&page=${page}`)
         .then(res => res.json())
         .then(data => {
-            if (parsedData.totalHits > 40) {
-                Notiflix.Notify.info(
-                    "We're sorry, but you've reached the end of search results."
-                );
-            };
             renderCard(data);
             refs.loadMoreBtn.classList.remove('is-hidden');
             handleButtonClick();
